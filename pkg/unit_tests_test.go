@@ -147,13 +147,13 @@ func TestInsertGist(t *testing.T) {
 
 	repository := NewRepository(dbConn)
 
-	gist, err := NewGistApiRequest("brurucy")
+	gist, err := NewGistApiRequest("noah")
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = repository.InsertGist(&(*gist)[0])
+	err = repository.InsertGistPgAndPipe(&(*gist)[0])
 
 	if err != nil {
 		t.Error(err)

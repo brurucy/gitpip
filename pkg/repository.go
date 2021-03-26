@@ -66,7 +66,7 @@ func (r *Repository) InsertUser(user *GistOwner) error {
 
 }
 
-func (r *Repository) InsertGist(gist *Gist) error {
+func (r *Repository) InsertGistPgAndPipe(gist *Gist) error {
 
 	log.Printf("Inserting gist: %v", gist.GistUUID)
 
@@ -106,6 +106,33 @@ func (r *Repository) InsertGist(gist *Gist) error {
 		}
 
 		log.Printf("Succesfully inserted file %s out of: %d", idx, len(gist.GistFiles))
+
+		log.Printf("Attempting to create an activity in Pipedrive")
+
+		rawFileText, err := GistTextDownloader(val.RawUrl)
+
+		if err != nil {
+
+			return fmt.Errorf("error downloading gist from rawUrl %v", err)
+
+		}
+
+		pipedriveRequest := &PipeAddActivityRequest{
+
+			Subject: val.Filename,
+			Note:    rawFileText,
+			Done:    false,
+		}
+
+		err = NewPipedriveActivity(pipedriveRequest)
+
+		if err != nil {
+
+			return fmt.Errorf("failed to set pipedrive activity")
+
+		}
+
+		log.Printf("Succesfully created pipedrive activity with subject: %v", val.Filename)
 
 	}
 
