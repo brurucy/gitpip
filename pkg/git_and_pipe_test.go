@@ -1,7 +1,10 @@
-package src
+package pkg
 
 import (
+	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
+	"os"
 	"testing"
 )
 
@@ -47,6 +50,113 @@ func TestGistDownloader(t *testing.T) {
 
 		t.Fatalf("%v", err)
 
+	}
+
+}
+
+func TestIsUserBeingTracked(t *testing.T) {
+
+	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
+
+	defer dbConn.Close()
+
+	repository := NewRepository(dbConn)
+
+	vals, err := repository.IsUserBeingTracked("brurucy")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if vals != false {
+		t.Errorf("Unexpected query result: %v", vals)
+	}
+
+}
+
+func TestIfIsGistAdded(t *testing.T) {
+
+	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
+
+	defer dbConn.Close()
+
+	repository := NewRepository(dbConn)
+
+	vals, err := repository.IsGistInDb("51b13376431d67d20548d9e008c465f3")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if vals != false {
+		t.Errorf("Unexpected query result: %v", vals)
+	}
+
+}
+
+func TestInsertUser(t *testing.T) {
+
+	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
+
+	defer dbConn.Close()
+
+	repository := NewRepository(dbConn)
+
+	newUser := &GistOwner{
+		Login: "brurucys",
+		Id:    929292,
+	}
+
+	err = repository.InsertUser(newUser)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+}
+
+func TestInsertGist(t *testing.T) {
+
+	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
+
+	defer dbConn.Close()
+
+	repository := NewRepository(dbConn)
+
+	gist, err := NewGistApiRequest("brurucy")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = repository.InsertGist(&(*gist)[0])
+
+	if err != nil {
+		t.Error(err)
 	}
 
 }

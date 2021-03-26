@@ -1,4 +1,4 @@
-package src
+package pkg
 
 type GistOwner struct {
 	Login string `json:"login"`
@@ -15,8 +15,6 @@ type Gist struct {
 	GistOwner GistOwner           `json:"owner"`
 	GistFiles map[string]GistFile `json:"files,omitempty"`
 }
-
-type GistApiResponse []Gist
 
 type PipeAddActivityRequest struct {
 	Note    string `json:"note"`

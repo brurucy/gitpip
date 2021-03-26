@@ -10,6 +10,7 @@ CREATE TABLE gists (
     PRIMARY KEY(gist_id),
     raw_url_link TEXT,
     user_id INT,
+    gist_file_title TEXT,
     CONSTRAINT fk_user_id
                    FOREIGN KEY(user_id)
                    REFERENCES users(user_id),
@@ -30,6 +31,10 @@ CREATE TABLE session_gist(
     gist_id VARCHAR(100),
     CONSTRAINT fk_gist_id
                          FOREIGN KEY (gist_id)
-                         REFERENCES gists(gist_id)
+                         REFERENCES gists(gist_id),
+    user_id INT,
+    CONSTRAINT fk_user_id
+                FOREIGN KEY(user_id)
+                REFERENCES users(user_id)
 
 );

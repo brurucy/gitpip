@@ -1,4 +1,4 @@
-package src
+package pkg
 
 import (
 	"bytes"
@@ -13,9 +13,9 @@ const (
 	githubBaseURL = "https://api.github.com/users/"
 )
 
-func NewGistApiRequest(name string) (*GistApiResponse, error) {
+func NewGistApiRequest(name string) (*[]Gist, error) {
 
-	var gistResponse GistApiResponse
+	var gistResponse []Gist
 
 	log.Printf("Sending a request for user %s\n", name)
 
