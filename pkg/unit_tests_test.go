@@ -160,3 +160,25 @@ func TestInsertGist(t *testing.T) {
 	}
 
 }
+
+func TestGetAll(t *testing.T) {
+
+	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
+
+	defer dbConn.Close()
+
+	repository := NewRepository(dbConn)
+
+	users, err := repository.GetAllUsers()
+
+	for _, val := range users {
+		fmt.Println(*val)
+	}
+
+}

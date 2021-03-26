@@ -47,6 +47,46 @@ func (r *Repository) IsUserBeingTracked(name string) (bool, error) {
 
 }
 
+func (r *Repository) GetAllUsers() ([]*GistOwner, error) {
+
+	log.Printf("Getting all tracked users\n")
+
+	query := "select u.username, u.user_id from users u"
+
+	rows, err := r.db.QueryContext(context.Background(), query)
+
+	if rows == nil {
+
+		return nil, fmt.Errorf("No users yet\n")
+
+	}
+
+	var users []*GistOwner
+
+	for rows.Next() {
+
+		g := &GistOwner{}
+		err := rows.Scan(&g.Login, &g.Id)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error scanning users query response %v", err)
+		}
+		users = append(users, g)
+
+	}
+
+	err = rows.Close()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error closing pgsql rows, %v", err)
+	}
+
+	log.Printf("Succesfully got all users")
+
+	return users, nil
+
+}
+
 func (r *Repository) InsertUser(user *GistOwner) error {
 
 	log.Printf("Inserting user: %v", user.Login)
