@@ -1,0 +1,20 @@
+* Hi.
+
+** I'm assuming you have the following environmental variables:
+
+1. PIPEDRIVE_TOKEN, I usually leave it on .envrc. I never put any security-risk important env vars on my shell.nix file
+2. PIPEDRIVE_ORG,
+3. PG_CONN
+
+** PG db schema:
+
+1. user - user_login, user_id
+2. session - session_id, timestamp
+3. gist - gist_id, raw_url_link, user_id
+4. gist_sess - session_id, gist_id
+
+** Queries:
+
+1. Is user in db?
+2. Is gist in db?
+3. Last added gists
