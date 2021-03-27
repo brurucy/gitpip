@@ -13,3 +13,13 @@ services:
         command: ["postgres", "-c", "log_statement=all"]
         volumes:
           - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    gistdrive:
+        image: gistdrive:1.0
+        environment:
+            - PIPEDRIVE_TOKEN=<your_token>
+            - PIPEDRIVE_ORG=<your_org>
+            - POSTGRES_CONNECTION_STRING=dbname=postgres host=postgres password=postgres user=postgres sslmode=disable port=5432
+        ports:
+            - 8080:8080
+        command: ["bash","./wait-for-it/wait-for-it.sh", "postgres:5432", "--", "go",  "run", "main.go"]
+          

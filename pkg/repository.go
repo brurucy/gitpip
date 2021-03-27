@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"log"
 	"time"
 )
@@ -22,7 +23,7 @@ func NewRepository(db *sql.DB) *Repository {
 
 func (r *Repository) IsUserBeingTracked(name string) (bool, error) {
 
-	log.Printf("Checking if user is in DB:\n")
+	logrus.Tracef("Checking if user is in DB:\n")
 
 	query := "select CASE  when EXISTS(SELECT 1 FROM users u WHERE u.username ILIKE '%' || $1 || '%') then true else false end;"
 
@@ -38,11 +39,11 @@ func (r *Repository) IsUserBeingTracked(name string) (bool, error) {
 	err := row.Scan(&isUserIn)
 
 	if err != nil {
-		log.Printf("Error scanning row, %v", err)
+		logrus.Tracef("Error scanning row, %v", err)
 		return false, err
 	}
 
-	log.Printf("Successfully checked if user is in Db: %v", isUserIn)
+	logrus.Tracef("Successfully checked if user is in Db: %v", isUserIn)
 
 	return isUserIn, nil
 
@@ -50,7 +51,7 @@ func (r *Repository) IsUserBeingTracked(name string) (bool, error) {
 
 func (r *Repository) GetAllUsers() ([]*GistOwner, error) {
 
-	log.Printf("Getting all tracked users\n")
+	logrus.Tracef("Getting all tracked users\n")
 
 	query := "select u.username, u.user_id from users u"
 
@@ -82,7 +83,7 @@ func (r *Repository) GetAllUsers() ([]*GistOwner, error) {
 		return nil, fmt.Errorf("Error closing pgsql rows, %v", err)
 	}
 
-	log.Printf("Succesfully got all users")
+	logrus.Tracef("Succesfully got all users")
 
 	return users, nil
 
@@ -90,7 +91,7 @@ func (r *Repository) GetAllUsers() ([]*GistOwner, error) {
 
 func (r *Repository) InsertUser(user *GistOwner) error {
 
-	log.Printf("Inserting user: %v", user.Login)
+	logrus.Tracef("Inserting user: %v", user.Login)
 
 	query := "INSERT INTO users (user_id, username) VALUES ($1,$2);"
 
@@ -101,7 +102,7 @@ func (r *Repository) InsertUser(user *GistOwner) error {
 		return fmt.Errorf("error inserting user %v", row.Err().Error())
 	}
 
-	log.Printf("Succesfully inserted user: %v", user.Login)
+	logrus.Tracef("Succesfully inserted user: %v", user.Login)
 
 	return nil
 
@@ -109,7 +110,7 @@ func (r *Repository) InsertUser(user *GistOwner) error {
 
 func (r *Repository) InsertGistPgAndPipe(gist *Gist) error {
 
-	log.Printf("Inserting gist: %v", gist.GistUUID)
+	logrus.Tracef("Inserting gist: %v", gist.GistUUID)
 
 	isUserInDb, err := r.IsUserBeingTracked(gist.GistOwner.Login)
 
@@ -121,7 +122,7 @@ func (r *Repository) InsertGistPgAndPipe(gist *Gist) error {
 
 	if isUserInDb == false {
 
-		log.Printf("User not in the database, adding it")
+		logrus.Tracef("User not in the database, adding it")
 
 		err := r.InsertUser(&gist.GistOwner)
 
@@ -133,7 +134,7 @@ func (r *Repository) InsertGistPgAndPipe(gist *Gist) error {
 
 	}
 
-	log.Printf("Inserting all gist files")
+	logrus.Tracef("Inserting all gist files")
 
 	for idx, val := range gist.GistFiles {
 
@@ -146,9 +147,9 @@ func (r *Repository) InsertGistPgAndPipe(gist *Gist) error {
 			return fmt.Errorf("error inserting gist %v", row.Err().Error())
 		}
 
-		log.Printf("Succesfully inserted file %s out of: %d", idx, len(gist.GistFiles))
+		logrus.Tracef("Succesfully inserted file %s out of: %d", idx, len(gist.GistFiles))
 
-		log.Printf("Attempting to create an activity in Pipedrive")
+		logrus.Tracef("Attempting to create an activity in Pipedrive")
 
 		rawFileText, err := GistTextDownloader(val.RawUrl)
 
@@ -173,7 +174,7 @@ func (r *Repository) InsertGistPgAndPipe(gist *Gist) error {
 
 		}
 
-		log.Printf("Succesfully created pipedrive activity with subject: %v", val.Filename)
+		logrus.Tracef("Succesfully created pipedrive activity with subject: %v", val.Filename)
 
 	}
 
@@ -192,7 +193,7 @@ func (r *Repository) NewRoutine() (*Routine, error) {
 		return nil, fmt.Errorf("error inserting new routine %v", row.Err().Error())
 	}
 
-	log.Printf("Succesfully inserted new routine\n")
+	logrus.Tracef("Succesfully inserted new routine\n")
 
 	var routine Routine
 
@@ -213,7 +214,7 @@ func (r *Repository) NewSession(username string) (*Session, error) {
 		return nil, fmt.Errorf("error inserting new routine %v", row.Err().Error())
 	}
 
-	log.Printf("Succesfully inserted new session for user %s\n", username)
+	logrus.Tracef("Succesfully inserted new session for user %s\n", username)
 
 	var session Session
 
@@ -233,7 +234,7 @@ func (r *Repository) LastSessionDate(username string) (time.Time, error) {
 
 	if row == nil {
 
-		log.Printf("No last session found")
+		logrus.Tracef("No last session found")
 		// returns 0001-01-01 00:00:00 +0000 UTC
 		return lastSessionCreatedAt, nil
 
@@ -247,7 +248,7 @@ func (r *Repository) LastSessionDate(username string) (time.Time, error) {
 
 	_ = row.Scan(&lastSessionCreatedAt)
 
-	log.Printf("Last session found: %s", lastSessionCreatedAt.String())
+	logrus.Tracef("Last session found: %s", lastSessionCreatedAt.String())
 
 	return lastSessionCreatedAt, nil
 
@@ -265,7 +266,7 @@ func (r *Repository) LatestGists(username string) ([]*GistSummary, error) {
 
 	}
 
-	log.Printf("Getting all latests gists for %s since %v", username, lastSessionDate)
+	logrus.Infof("Getting all latests gists for %s since %v", username, lastSessionDate)
 
 	rows, err := r.db.QueryContext(context.Background(), query, lastSessionDate, username)
 
@@ -295,7 +296,7 @@ func (r *Repository) LatestGists(username string) ([]*GistSummary, error) {
 		return nil, fmt.Errorf("Error closing pgsql rows, %v", err)
 	}
 
-	log.Printf("Succesfully got all: %d latest gists", len(gists))
+	logrus.Tracef("Succesfully got all: %d latest gists", len(gists))
 
 	return gists, nil
 
@@ -305,7 +306,7 @@ func (r *Repository) Routine() error {
 
 	allUsersBeingTracked, err := r.GetAllUsers()
 
-	log.Printf("Initializing Routine")
+	logrus.Info("Initializing Routine")
 
 	if err != nil {
 
@@ -313,17 +314,13 @@ func (r *Repository) Routine() error {
 
 	}
 
-	log.Printf("Starting a new routine")
-
 	newRoutine, err := r.NewRoutine()
 
-	log.Printf("Routine %d started", newRoutine.Id)
+	logrus.Tracef("Routine %d started", newRoutine.Id)
 
-	log.Printf("Iterating over tracked users")
+	logrus.Tracef("Iterating over tracked users")
 
 	for _, val := range allUsersBeingTracked {
-
-		log.Printf("---------------------------------")
 
 		currentUserGists, err := NewGistApiRequest(val.Login)
 
@@ -333,19 +330,15 @@ func (r *Repository) Routine() error {
 
 		}
 
-		log.Printf("Iterating over user %s's %d gists", val.Login, len(*currentUserGists))
-
-		log.Printf("---------------------------------")
+		logrus.Tracef("Iterating over user %s's %d gists", val.Login, len(*currentUserGists))
 
 		for _, gists := range *currentUserGists {
 
-			log.Printf("Testing if Gist is in DB")
+			logrus.Tracef("Testing if Gist is in DB")
 
 			isGistAlreadyIn, err := r.IsGistInDb(gists.GistUUID)
 
-			log.Printf("Is gist already in: %v", isGistAlreadyIn)
-
-			log.Printf("---------------------------------")
+			logrus.Tracef("Is gist already in: %v", isGistAlreadyIn)
 
 			if err != nil {
 
@@ -355,7 +348,7 @@ func (r *Repository) Routine() error {
 
 			if isGistAlreadyIn != true {
 
-				log.Printf("Gist %s not in", gists.GistUUID)
+				logrus.Tracef("Gist %s not in", gists.GistUUID)
 
 				err := r.InsertGistPgAndPipe(&gists)
 
@@ -365,7 +358,7 @@ func (r *Repository) Routine() error {
 
 				}
 
-				log.Printf("Populating the routine_gists table")
+				logrus.Tracef("Populating the routine_gists table")
 
 				query := "INSERT INTO routine_gist_user (routine_id, gist_id, user_id) VALUES ($1, $2, $3);"
 
@@ -379,9 +372,7 @@ func (r *Repository) Routine() error {
 
 			} else {
 
-				log.Printf("Gist %s already in", gists.GistUUID)
-
-				log.Printf("---------------------------------")
+				logrus.Tracef("Gist %s already in", gists.GistUUID)
 
 			}
 
@@ -403,7 +394,7 @@ func (r *Repository) IsGistInDb(id string) (bool, error) {
 
 	if row == nil {
 
-		log.Printf("Error getting query row context\n")
+		logrus.Warnf("Error getting query row context\n")
 		return false, nil
 	}
 
@@ -411,11 +402,11 @@ func (r *Repository) IsGistInDb(id string) (bool, error) {
 	err := row.Scan(&isGistIn)
 
 	if err != nil {
-		log.Printf("Error scanning row, %v", err)
+		logrus.Warnf("Error scanning row, %v", err)
 		return false, err
 	}
 
-	log.Printf("Successfully checked if gist is in Db")
+	logrus.Trace("Successfully checked if gist is in Db")
 
 	return isGistIn, nil
 

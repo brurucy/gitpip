@@ -3,13 +3,15 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
 	"gitpip/pkg"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -19,11 +21,16 @@ const (
 
 func main() {
 
-	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+	logrus.SetLevel(logrus.TraceLevel)
+	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+	logrus.Info("Starting program")
 
+	logrus.Trace("Attempting to connect to postgres")
+	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+	logrus.Info(os.Getenv("POSTGRES_CONNECTION_STRING"))
 	if err != nil {
 
-		fmt.Errorf("%v", err)
+		logrus.Fatalf("%v", err)
 
 	}
 
@@ -33,13 +40,14 @@ func main() {
 	handler := pkg.NewHandler(repository)
 	router := mux.NewRouter()
 
+	logrus.Trace("Registering routes")
 	handler.RegisterRoutes(router)
 
 	httpSrv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", httpServicePort),
 		Handler: router,
 	}
-	log.Println("Serving HTTP on port: ", httpServicePort)
+	logrus.Infof("Serving HTTP on port: %v", httpServicePort)
 
 	go func() {
 		err = httpSrv.ListenAndServe()
@@ -49,9 +57,10 @@ func main() {
 
 	}()
 
-	ticker := time.NewTicker(180 * time.Minute)
+	ticker := time.NewTicker(5 * time.Minute)
 	done := make(chan bool)
 
+	logrus.Info("Starting routine")
 	for {
 		select {
 		case <-done:

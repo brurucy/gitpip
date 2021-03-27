@@ -3,8 +3,9 @@ package pkg
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 )
@@ -17,25 +18,21 @@ func NewGistApiRequest(name string) (*[]Gist, error) {
 
 	var gistResponse []Gist
 
-	log.Printf("Sending a request for user %s\n", name)
+	logrus.Infof("Sending a request to get gists for user %s\n", name)
 
 	resp, err := http.Get(githubBaseURL + name + "/gists")
 
 	if err != nil {
 
-		log.Printf("Failed to get user %s with error %v\n", name, err)
-
-		return nil, err
+		return nil, fmt.Errorf("Failed to get user %s gists with error %v\n", name, err)
 
 	}
 
-	log.Printf("Got an ok response")
+	logrus.Tracef("Got an ok response")
 
 	if err := json.NewDecoder(resp.Body).Decode(&gistResponse); err != nil {
 
-		log.Printf("Failed to unmarshal %v\n", err)
-
-		return nil, err
+		return nil, fmt.Errorf("Failed to unmarshal %v\n", err)
 
 	}
 
@@ -52,25 +49,21 @@ func NewPipedriveActivity(request *PipeAddActivityRequest) error {
 
 	if err != nil {
 
-		log.Printf("Failed to marshall the activity request %v", err)
-
-		return err
+		return fmt.Errorf("Failed to marshall the activity request %v", err)
 
 	}
 
-	log.Printf("Sending a POST to Pipedrive's API")
+	logrus.Info("Sending a POST to Pipedrive's API")
 
 	resp, err := http.Post(apiCALL, "application/json", bytes.NewBuffer(marshalledRequest))
 
 	if err != nil && resp.StatusCode != 201 {
 
-		log.Printf("Failed to POST %v", err)
-
-		return err
+		return fmt.Errorf("Failed to POST %v", err)
 
 	}
 
-	log.Printf("Successfully added new activity")
+	logrus.Tracef("Successfully added new activity")
 
 	resp.Body.Close()
 
@@ -82,33 +75,29 @@ func GistTextDownloader(url string) (string, error) {
 
 	var gistText string
 
-	log.Print("Sending a request to get gist text\n")
+	logrus.Info("Sending a request to get gist text\n")
 
 	resp, err := http.Get(url)
 
 	if err != nil {
 
-		log.Print("Failed to get gist\n")
-
-		return "", err
+		return "", fmt.Errorf("Failed to GET raw gist %v", err)
 
 	}
-
-	log.Printf("Got an ok response\n")
 
 	body, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
 
-		log.Printf("Failed to read %v\n", err)
-
-		return "", err
+		return "", fmt.Errorf("Failed to read %v\n", err)
 
 	}
 
 	gistText = string(body)
 
 	resp.Body.Close()
+
+	logrus.Tracef("Succesfully downloaded Gist")
 
 	return gistText, nil
 

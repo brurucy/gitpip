@@ -2,12 +2,10 @@ package pkg
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
 type Handler struct {
@@ -28,14 +26,13 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 
 func (h *Handler) GetAllUsers(w http.ResponseWriter, _ *http.Request) {
 
-	log.Printf("---------------------------------")
-	log.Printf("Got a request to get all tracked users")
+	logrus.Trace("Got a request to get all tracked users")
 
 	users, err := h.repository.GetAllUsers()
 
 	if err != nil {
 
-		log.Printf("Error fetching all users: %v", err)
+		logrus.Errorf("Error fetching all users: %v", err)
 		w.WriteHeader(400)
 		return
 
@@ -59,8 +56,7 @@ func (h *Handler) TrackUser(w http.ResponseWriter, r *http.Request) {
 	username := vars["username"]
 	id := vars["id"]
 
-	log.Printf("---------------------------------")
-	log.Printf("Got a request to track user %s", username)
+	logrus.Tracef("Got a request to track user %s", username)
 
 	i, err := strconv.ParseInt(id, 10, 32)
 
@@ -71,7 +67,7 @@ func (h *Handler) TrackUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 
-		fmt.Errorf("Bad request")
+		logrus.Errorf("Bad request %v", err)
 		w.WriteHeader(400)
 
 		return
@@ -89,14 +85,13 @@ func (h *Handler) LatestGists(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
-	log.Printf("---------------------------------")
-	log.Printf("Got a request to get all latest gists")
+	logrus.Trace("Got a request to get all latest gists")
 
 	gists, err := h.repository.LatestGists(username)
 
 	if err != nil {
 
-		fmt.Errorf("Error %v", err)
+		logrus.Errorf("Error %v", err)
 		w.WriteHeader(400)
 		return
 	}
@@ -105,7 +100,7 @@ func (h *Handler) LatestGists(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 
-		fmt.Errorf("Error %v", err)
+		logrus.Errorf("Error %v", err)
 		w.WriteHeader(400)
 		return
 	}
@@ -124,7 +119,7 @@ func (h *Handler) LatestGists(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 
-	log.Printf("Got a health check")
+	logrus.Trace("Got a health check")
 
 	w.Write([]byte("Alive"))
 	w.WriteHeader(200)
