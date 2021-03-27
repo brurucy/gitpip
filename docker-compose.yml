@@ -18,7 +18,7 @@ services:
         environment:
             - PIPEDRIVE_TOKEN=<your_token>
             - PIPEDRIVE_ORG=<your_org>
-            - POSTGRES_CONNECTION_STRING=dbname=postgres host=postgres password=postgres user=postgres sslmode=disable port=5432
+            - POSTGRES_CONNECTION_STRING=<connection>
         ports:
             - 8080:8080
         command: ["bash","./wait-for-it/wait-for-it.sh", "postgres:5432", "--", "go",  "run", "main.go"]
