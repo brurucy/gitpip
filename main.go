@@ -49,7 +49,7 @@ func main() {
 
 	}()
 
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(180 * time.Minute)
 	done := make(chan bool)
 
 	for {
