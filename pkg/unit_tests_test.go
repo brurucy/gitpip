@@ -265,3 +265,50 @@ func TestSession(t *testing.T) {
 	}
 
 }
+
+func TestGetLastSession(t *testing.T) {
+
+	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
+
+	defer dbConn.Close()
+
+	repository := NewRepository(dbConn)
+
+	_, err = repository.LastSessionDate("brurucy")
+
+}
+
+func TestGetLatestGists(t *testing.T) {
+
+	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
+
+	defer dbConn.Close()
+
+	repository := NewRepository(dbConn)
+
+	latestGists, err := repository.LatestGists("brurucy")
+
+	if err != nil {
+
+		t.Errorf("%v", err)
+
+	}
+
+	for _, vals := range latestGists {
+
+		fmt.Println(*vals)
+	}
+
+}

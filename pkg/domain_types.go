@@ -18,6 +18,13 @@ type Gist struct {
 	GistFiles map[string]GistFile `json:"files,omitempty"`
 }
 
+type GistSummary struct {
+	GistUUID  string `json:"id"`
+	GistOwner string `json:"owner"`
+	Filename  string `json:"filename"`
+	RawUrl    string `json:"raw_url"`
+}
+
 type PipeAddActivityRequest struct {
 	Note    string `json:"note"`
 	Subject string `json:"subject"`

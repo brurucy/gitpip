@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 )
 
 type Repository struct {
@@ -219,6 +220,84 @@ func (r *Repository) NewSession(username string) (*Session, error) {
 	_ = row.Scan(&session.SessionId, &session.UserId, &session.CreatedAt)
 
 	return &session, nil
+
+}
+
+func (r *Repository) LastSessionDate(username string) (time.Time, error) {
+
+	query := "SELECT MAX(s.created_at) FROM session s WHERE s.user_id = (SELECT u.user_id FROM users u WHERE u.username ILIKE '%' || $1 || '%');"
+
+	row := r.db.QueryRowContext(context.Background(), query, username)
+
+	var lastSessionCreatedAt time.Time
+
+	if row == nil {
+
+		log.Printf("No last session found")
+		// returns 0001-01-01 00:00:00 +0000 UTC
+		return lastSessionCreatedAt, nil
+
+	}
+
+	if row.Err() != nil {
+
+		return lastSessionCreatedAt, fmt.Errorf("error getting last session %v", row.Err().Error())
+
+	}
+
+	_ = row.Scan(&lastSessionCreatedAt)
+
+	log.Printf("Last session found: %s", lastSessionCreatedAt.String())
+
+	return lastSessionCreatedAt, nil
+
+}
+
+func (r *Repository) LatestGists(username string) ([]*GistSummary, error) {
+
+	query := "SELECT rgu.gist_id, u.username, g.gist_file_title, r.routine_id FROM routine_gist_user rgu LEFT JOIN users u ON rgu.user_id = u.user_id LEFT JOIN gists g on rgu.gist_id = g.gist_id LEFT JOIN routine r ON rgu.routine_id = r.routine_id WHERE r.created_at > $1 AND u.username ILIKE '%' || $2 || '%';"
+
+	lastSessionDate, err := r.LastSessionDate(username)
+
+	if err != nil {
+
+		return nil, fmt.Errorf("%s", err)
+
+	}
+
+	log.Printf("Getting all latests gists for %s since %v", username, lastSessionDate)
+
+	rows, err := r.db.QueryContext(context.Background(), query, lastSessionDate, username)
+
+	if rows == nil {
+
+		return nil, fmt.Errorf("No gists yet\n")
+
+	}
+
+	var gists []*GistSummary
+
+	for rows.Next() {
+
+		g := &GistSummary{}
+		err := rows.Scan(&g.GistUUID, &g.GistOwner, &g.Filename, &g.RawUrl)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error latest gists query response %v", err)
+		}
+		gists = append(gists, g)
+
+	}
+
+	err = rows.Close()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error closing pgsql rows, %v", err)
+	}
+
+	log.Printf("Succesfully got all: %d latest gists", len(gists))
+
+	return gists, nil
 
 }
 
