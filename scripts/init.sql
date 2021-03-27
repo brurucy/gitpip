@@ -6,35 +6,40 @@ CREATE TABLE users (
 );
 
 CREATE TABLE gists (
+    gist_unique_id INT GENERATED ALWAYS AS IDENTITY,
     gist_id VARCHAR(100),
-    PRIMARY KEY(gist_id),
+    PRIMARY KEY(gist_unique_id),
     raw_url_link TEXT,
-    user_id INT,
+    username VARCHAR(39),
     gist_file_title TEXT,
-    CONSTRAINT fk_user_id
-                   FOREIGN KEY(user_id)
-                   REFERENCES users(user_id),
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE session (
-    session_id INT GENERATED ALWAYS AS IDENTITY,
-    PRIMARY KEY(session_id),
+CREATE TABLE routine (
+    routine_id INT GENERATED ALWAYS AS IDENTITY,
+    PRIMARY KEY(routine_id),
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE session_gist(
-    session_id INT,
-    CONSTRAINT fk_session_id
-                         FOREIGN KEY (session_id)
-                         REFERENCES session(session_id),
+CREATE TABLE routine_gist_user(
+    routine_id INT,
+    CONSTRAINT fk_routine_id
+                         FOREIGN KEY (routine_id)
+                         REFERENCES routine(routine_id),
     gist_id VARCHAR(100),
-    CONSTRAINT fk_gist_id
-                         FOREIGN KEY (gist_id)
-                         REFERENCES gists(gist_id),
     user_id INT,
     CONSTRAINT fk_user_id
                 FOREIGN KEY(user_id)
                 REFERENCES users(user_id)
 
 );
+
+CREATE TABLE session(
+    session_id INT GENERATED ALWAYS AS IDENTITY,
+    user_id INT,
+    CONSTRAINT fk_user_id
+               FOREIGN KEY(user_id)
+               REFERENCES users(user_id),
+    PRIMARY KEY(session_id),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+)

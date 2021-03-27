@@ -182,3 +182,86 @@ func TestGetAll(t *testing.T) {
 	}
 
 }
+
+func TestNewRoutine(t *testing.T) {
+
+	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
+
+	defer dbConn.Close()
+
+	repository := NewRepository(dbConn)
+
+	sess, err := repository.NewRoutine()
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
+
+	fmt.Println(sess)
+
+}
+
+func TestRoutine(t *testing.T) {
+
+	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
+
+	defer dbConn.Close()
+
+	repository := NewRepository(dbConn)
+
+	me := &GistOwner{
+		Login: "brurucy",
+		Id:    4424,
+	}
+
+	randomPerson := &GistOwner{
+		Login: "lewisgaul",
+		Id:    16408073,
+	}
+
+	repository.InsertUser(me)
+	repository.InsertUser(randomPerson)
+
+	err = repository.Routine()
+
+	fmt.Println(err)
+
+}
+
+func TestSession(t *testing.T) {
+
+	dbConn, err := sql.Open("postgres", os.Getenv("POSTGRES_CONNECTION_STRING"))
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
+
+	defer dbConn.Close()
+
+	repository := NewRepository(dbConn)
+
+	_, err = repository.NewSession("brurucy")
+
+	if err != nil {
+
+		t.Fatal()
+
+	}
+
+}

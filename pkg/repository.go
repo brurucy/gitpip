@@ -136,9 +136,9 @@ func (r *Repository) InsertGistPgAndPipe(gist *Gist) error {
 
 	for idx, val := range gist.GistFiles {
 
-		query := "INSERT INTO gists (gist_id, gist_file_title, raw_url_link, user_id) VALUES ($1,$2,$3,$4);"
+		query := "INSERT INTO gists (gist_id, gist_file_title, raw_url_link, username) VALUES ($1,$2,$3,$4);"
 
-		row := r.db.QueryRowContext(context.Background(), query, gist.GistUUID, idx, val.RawUrl, gist.GistOwner.Id)
+		row := r.db.QueryRowContext(context.Background(), query, gist.GistUUID, idx, val.RawUrl, gist.GistOwner.Login)
 
 		if row.Err() != nil {
 
@@ -180,11 +180,145 @@ func (r *Repository) InsertGistPgAndPipe(gist *Gist) error {
 
 }
 
+func (r *Repository) NewRoutine() (*Routine, error) {
+
+	query := "INSERT INTO routine (routine_id) VALUES (DEFAULT) RETURNING routine_id, created_at"
+
+	row := r.db.QueryRowContext(context.Background(), query)
+
+	if row.Err() != nil {
+
+		return nil, fmt.Errorf("error inserting new routine %v", row.Err().Error())
+	}
+
+	log.Printf("Succesfully inserted new routine\n")
+
+	var routine Routine
+
+	_ = row.Scan(&routine.Id, &routine.CreatedAt)
+
+	return &routine, nil
+
+}
+
+func (r *Repository) NewSession(username string) (*Session, error) {
+
+	query := "INSERT INTO session (session_id, user_id) VALUES (DEFAULT, (SELECT user_id FROM users u WHERE u.username ILIKE '%' || $1 || '%')) RETURNING session_id, user_id, created_at"
+
+	row := r.db.QueryRowContext(context.Background(), query, username)
+
+	if row.Err() != nil {
+
+		return nil, fmt.Errorf("error inserting new routine %v", row.Err().Error())
+	}
+
+	log.Printf("Succesfully inserted new session for user %s\n", username)
+
+	var session Session
+
+	_ = row.Scan(&session.SessionId, &session.UserId, &session.CreatedAt)
+
+	return &session, nil
+
+}
+
+func (r *Repository) Routine() error {
+
+	allUsersBeingTracked, err := r.GetAllUsers()
+
+	log.Printf("Initializing Routine")
+
+	if err != nil {
+
+		return fmt.Errorf("failed to get all users %v", err)
+
+	}
+
+	log.Printf("Starting a new routine")
+
+	newRoutine, err := r.NewRoutine()
+
+	log.Printf("Routine %d started", newRoutine.Id)
+
+	log.Printf("Iterating over tracked users")
+
+	for _, val := range allUsersBeingTracked {
+
+		log.Printf("---------------------------------")
+
+		currentUserGists, err := NewGistApiRequest(val.Login)
+
+		if err != nil {
+
+			return fmt.Errorf("failed to GET from github's API %v", err)
+
+		}
+
+		log.Printf("Iterating over user %s's %d gists", val.Login, len(*currentUserGists))
+
+		log.Printf("---------------------------------")
+
+		for _, gists := range *currentUserGists {
+
+			log.Printf("Testing if Gist is in DB")
+
+			isGistAlreadyIn, err := r.IsGistInDb(gists.GistUUID)
+
+			log.Printf("Is gist already in: %v", isGistAlreadyIn)
+
+			log.Printf("---------------------------------")
+
+			if err != nil {
+
+				return fmt.Errorf("Failed to check if gist is in db %v", err)
+
+			}
+
+			if isGistAlreadyIn != true {
+
+				log.Printf("Gist %s not in", gists.GistUUID)
+
+				err := r.InsertGistPgAndPipe(&gists)
+
+				if err != nil {
+
+					return fmt.Errorf("Failed to insert gist into pg or/and pipedrive %v", err)
+
+				}
+
+				log.Printf("Populating the routine_gists table")
+
+				query := "INSERT INTO routine_gist_user (routine_id, gist_id, user_id) VALUES ($1, $2, $3);"
+
+				row := r.db.QueryRowContext(context.Background(), query, &newRoutine.Id, &gists.GistUUID, &val.Id)
+
+				if row.Err() != nil {
+
+					return fmt.Errorf("Failed to create new routine_gist")
+
+				}
+
+			} else {
+
+				log.Printf("Gist %s already in", gists.GistUUID)
+
+				log.Printf("---------------------------------")
+
+			}
+
+		}
+
+	}
+
+	return nil
+
+}
+
 func (r *Repository) IsGistInDb(id string) (bool, error) {
 
 	log.Printf("Checking if gist is in DB:\n")
 
-	query := "select CASE when EXISTS( SELECT 1 FROM gists g WHERE g.gist_id ILIKE '$' || $1 || '$' ) then true else false end;"
+	query := "select CASE when EXISTS( SELECT 1 FROM gists g WHERE g.gist_id ILIKE '%' || $1 || '%' ) then true else false end;"
 
 	row := r.db.QueryRowContext(context.Background(), query, id)
 
