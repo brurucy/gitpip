@@ -28,6 +28,7 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 
 func (h *Handler) GetAllUsers(w http.ResponseWriter, _ *http.Request) {
 
+	log.Printf("---------------------------------")
 	log.Printf("Got a request to get all tracked users")
 
 	users, err := h.repository.GetAllUsers()
@@ -58,6 +59,7 @@ func (h *Handler) TrackUser(w http.ResponseWriter, r *http.Request) {
 	username := vars["username"]
 	id := vars["id"]
 
+	log.Printf("---------------------------------")
 	log.Printf("Got a request to track user %s", username)
 
 	i, err := strconv.ParseInt(id, 10, 32)
@@ -87,6 +89,7 @@ func (h *Handler) LatestGists(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 
+	log.Printf("---------------------------------")
 	log.Printf("Got a request to get all latest gists")
 
 	gists, err := h.repository.LatestGists(username)
