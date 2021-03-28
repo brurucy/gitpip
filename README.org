@@ -2,9 +2,9 @@
 
 ** I'm assuming you have the following environmental variables:
 
-1. PIPEDRIVE_TOKEN, I usually leave it on .envrc. I never put any security-risk important env vars on my shell.nix file
-2. PIPEDRIVE_ORG,
-3. PG_CONN
+1. PIPEDRIVE_TOKEN
+2. PIPEDRIVE_ORG
+3. POSTGRES_CONNECTION_STRING
 
 ** PG db schema:
 
@@ -20,3 +20,8 @@
 3. Last added gists
 
 ** Cluster ip: 35.228.33.46
+
+** Cloud stuff:
+- Private Artifact Registry for the images
+- Stackdriver for all GKE logging
+- GKE, hardened instance, load balancer, liveliness probe, readiness probe, 3 nodes, 12 gb ram, europe-north1-a
