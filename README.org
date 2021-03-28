@@ -184,7 +184,7 @@ A load balanced external ip is: 35.228.33.forty-six(the actual number is 46, I'm
 
 All endpoints are accessible from there.
 
-*** Tests
+*** Tests - 11
 
 I wrote some 300 lines of test, but they were quite shameful, please don't look.
 
