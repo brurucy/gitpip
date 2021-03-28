@@ -18,3 +18,5 @@
 1. Is user in db?
 2. Is gist in db?
 3. Last added gists
+
+** Cluster ip: 35.228.33.46
