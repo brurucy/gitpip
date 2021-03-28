@@ -180,7 +180,7 @@ I know that logrus is writing everything to ~stderr~, I didn't have enough time 
 
 **** External Service Ip
 
-A load balanced external ip is: 35.228.33.forty-six(the actual number is 46, I'm just writing it down in order to not get busted by crawlers)
+A load balanced external ip is: *35.228.33.forty-six*(the actual number is 46, I'm just writing it down in order to not get busted by crawlers) on port *8080*.
 
 All endpoints are accessible from there.
 
