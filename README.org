@@ -96,7 +96,7 @@ All sensitive information is required as an environment variable that ought to b
 
 **** /latestgists
 ***** POST
-- /latestgists/<some_user> Gets all newly added gists for a specified, already in, user, *AND* records the session, from which the next call will filter gists from.
+- /latestgists/<some_user> Gets all newly added gists for a specified, already in, user, *AND* records the session, from which the next call will filter gists from. *it will only show gists if a routine has happened, otherwise it won't show any. with the kubernetes endpoint it is not possible to know when the last routine happened*
 
 *** How to run - 9
 
@@ -150,7 +150,7 @@ curl -X POST -H "Context-Type: application/json" "http://localhost:8080/latestgi
 
 #+END_SRC
 
-Should return the newly added gists, with respect to the *last* time you've made a POST to that endpoint, and given that a ~routine~ has happened.
+Should return the newly added gists, with respect to the *last* time you've made a POST to that endpoint, and *given* that a ~routine~ has happened(*EVERY THREE HOURS*). So if it didn't show anything now, come back in 3 hours :) (sorry)
 
 *** Cloud - 10
 
